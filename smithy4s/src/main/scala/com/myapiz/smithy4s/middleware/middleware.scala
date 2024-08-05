@@ -1,17 +1,19 @@
 package com.myapiz.smithy4s.middleware
 
 import cats.effect.{IO, IOLocal}
-
-import com.github.plokhotnyuk.jsoniter_scala.macros._
-import com.github.plokhotnyuk.jsoniter_scala.core._
-
+import com.github.plokhotnyuk.jsoniter_scala.core.*
+import com.github.plokhotnyuk.jsoniter_scala.macros.*
+import com.myapiz.smithy.auth.*
+import com.myapiz.smithy.error.*
 import org.http4s.client.Client
 import org.http4s.{Header, HttpApp}
 import org.typelevel.ci.CIString
-import smithy4s.Hints
+import smithy4s.Endpoint.Middleware
+import smithy4s.Endpoint.Middleware.Standard
 import smithy4s.http4s.{ClientEndpointMiddleware, ServerEndpointMiddleware}
-import com.myapiz.smithy.error._
-import com.myapiz.smithy.auth._
+import smithy4s.{Hints, ShapeId}
+
+import scala.util.Try
 
 object AuthMiddleware {
 
@@ -41,7 +43,7 @@ object AuthMiddleware {
   given aAuthDataCodec: JsonValueCodec[AuthData] = JsonCodecMaker.make
 
   private def decodeAuthData(encodedData: String) = {
-    readFromString[AuthData](encodedData)
+    Try(readFromString[AuthData](encodedData))
       .fold(
         err => IO.raiseError(new NotAuthorizedError(s"Invalid AuthData: $err")),
         data => IO.pure(data)
@@ -104,7 +106,7 @@ object AuthzMiddleware {
       for {
         authDataLocal <- local.get
         authData <- IO.fromOption(authDataLocal)(
-          new NotAuthorizedError("request not authenticated")
+          new NotAuthorizedError("request not authorized without credentials")
         )
         requestServicePermissions = authData.permissions.getOrElse(
           serviceName,
@@ -112,33 +114,35 @@ object AuthzMiddleware {
         )
         _ <- IO
           .raiseWhen(permissions.intersect(requestServicePermissions).isEmpty)(
-            new NotAuthorizedError("request not authorized")
+            new NotAuthorizedError(
+              "request not authorized with given permissions"
+            )
           )
         response <- inputApp(request)
       } yield response
     }
   }
 
-  def apply(local: IOLocal[Option[AuthData]]): ServerEndpointMiddleware[IO] =
-    new ServerEndpointMiddleware.Simple[IO] {
-      def prepareWithHints(
+  def apply(
+      local: IOLocal[Option[AuthData]],
+      scopeName: Option[String] = None
+  ): ServerEndpointMiddleware[IO] =
+    new Standard[HttpApp[IO]] {
+      def prepare(
+          serviceId: ShapeId,
+          endpointId: ShapeId,
           serviceHints: Hints,
           endpointHints: Hints
       ): HttpApp[IO] => HttpApp[IO] = {
-        val serviceName = serviceHints
-          .get[com.myapiz.sheet.api.Myapi]
-          .getOrElse(
-            throw IllegalArgumentException(
-              "@myapi annotation is required on published service"
-            )
-          )
-          .name
+        // deduce the required scope prefix from the service name in smithy definition
+        // e.g. for service Sheet, the scope prefix is sheet
+        val serviceName = scopeName.getOrElse(serviceId.name).toLowerCase
         val hint = endpointHints
-          .get[com.myapiz.sheet.api.Authorization]
-          .orElse(serviceHints.get[com.myapiz.sheet.api.Authorization])
+          .get[Authorization]
+          .orElse(serviceHints.get[Authorization])
         hint match {
-          case Some(authzHint) =>
-            middleware(serviceName, authzHint.allows.toSet, local)
+          case Some(hint) =>
+            middleware(serviceName, hint.allow.toSet, local)
           case None => identity
         }
       }

@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "sources": ["model/src/main/smithy"],
+  "outputDirectory": "target",
+  "maven": {
+    "dependencies": ["com.disneystreaming.alloy:alloy-core:0.3.11"],
+    "repositories": [{ "url": "https://repo1.maven.org/maven2/" }]
+  }
+}

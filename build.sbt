@@ -12,14 +12,14 @@ val production: Seq[ModuleID] = Seq(
 
 val settings = Seq(
   organization := "com.myapiz",
-  version := "0.0.1" + sys.props
-    .getOrElse("buildNumber", default = "0-SNAPSHOT"),
   scalaVersion := "3.4.2",
   libraryDependencies ++= production,
   Test / publishArtifact := false
 )
 
 val publishSettings = Seq(
+  version := "0.0.1" + sys.props
+    .getOrElse("buildNumber", default = "-SNAPSHOT"),
   publishMavenStyle := true,
   githubTokenSource := TokenSource.Environment("GITHUB_TOKEN"),
   githubOwner := "myapiz",
@@ -29,8 +29,6 @@ val publishSettings = Seq(
 lazy val model = (project in file("model"))
   .settings(
     Seq(
-      version := "0.0.1" + sys.props
-        .getOrElse("buildNumber", default = "0-SNAPSHOT"),
       scalaVersion := "3.4.2",
       autoScalaLibrary := false
     ) ++ publishSettings
@@ -44,4 +42,10 @@ lazy val smithy4s =
     .configs(Test)
 
 lazy val root = (project in file("."))
+  .enablePlugins(SbtPlugin)
+  .settings(
+    Seq(
+      publishArtifact := false
+    ) ++ publishSettings
+  )
   .aggregate(model, smithy4s)

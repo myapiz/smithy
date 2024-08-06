@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/smithy.iml" filepath="$PROJECT_DIR$/.idea/modules/smithy.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/smithy.model.iml" filepath="$PROJECT_DIR$/.idea/modules/smithy.model.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/smithy.smithy-build.iml" filepath="$PROJECT_DIR$/.idea/modules/smithy.smithy-build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/smithy.smithy4s.iml" filepath="$PROJECT_DIR$/.idea/modules/smithy.smithy4s.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.iml" filepath="$PROJECT_DIR$/.idea/modules/root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.model.iml" filepath="$PROJECT_DIR$/.idea/modules/root.model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.root-build.iml" filepath="$PROJECT_DIR$/.idea/modules/root.root-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/root.smithy4s.iml" filepath="$PROJECT_DIR$/.idea/modules/root.smithy4s.iml" />
     </modules>
   </component>
 </project>

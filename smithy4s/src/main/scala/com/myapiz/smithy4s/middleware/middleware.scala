@@ -17,27 +17,10 @@ import scala.util.Try
 
 object AuthMiddleware {
 
-  case class AuthData(clientId: String, email: String, scope: String) {
-
-    lazy val permissions: Map[String, Set[Permission]] = parseScope(scope)
-
-    private def parseScope(scope: String): Map[String, Set[Permission]] =
-      scope
-        .split(',')
-        .map(scope => {
-          val s = scope.trim
-          val service_perm = s.split(":").take(2)
-          val perm =
-            service_perm.drop(1).headOption.map(_.toLowerCase).fold(Nil) {
-              case "*"                => Permission.values
-              case "read"             => Permission.READ :: Nil
-              case "write"            => Permission.WRITE :: Nil
-              case "exec" | "execute" => Permission.EXECUTE :: Nil
-            }
-          service_perm(0) -> perm
-        })
-        .groupBy(_._1)
-        .map { case (k, v) => k -> v.flatMap(_._2).toSet }
+  // authentication data passed by myapiz.com via header
+  case class AuthData(clientId: String, orgId: String, perms: List[String]) {
+    def toPermissions: List[Permission] =
+      perms.flatMap(p => Permission.fromString(p))
   }
 
   given aAuthDataCodec: JsonValueCodec[AuthData] = JsonCodecMaker.make
@@ -45,7 +28,8 @@ object AuthMiddleware {
   private def decodeAuthData(encodedData: String) = {
     Try(readFromString[AuthData](encodedData))
       .fold(
-        err => IO.raiseError(new NotAuthorizedError(s"Invalid AuthData: $err")),
+        err =>
+          IO.raiseError(new NotAuthorizedError(s"Cannot decode header: $err")),
         data => IO.pure(data)
       )
   }
@@ -108,10 +92,7 @@ object AuthzMiddleware {
         authData <- IO.fromOption(authDataLocal)(
           new NotAuthorizedError("request not authorized without credentials")
         )
-        requestServicePermissions = authData.permissions.getOrElse(
-          serviceName,
-          Set.empty
-        )
+        requestServicePermissions = authData.toPermissions.toSet
         _ <- IO
           .raiseWhen(permissions.intersect(requestServicePermissions).isEmpty)(
             new NotAuthorizedError(

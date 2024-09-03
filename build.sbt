@@ -18,7 +18,7 @@ val settings = Seq(
 )
 
 val publishSettings = Seq(
-  version := "0.0.1" + sys.props
+  version := "0.0.2" + sys.props
     .getOrElse("buildNumber", default = "-SNAPSHOT"),
   publishMavenStyle := true,
   githubTokenSource := TokenSource.Environment("GITHUB_TOKEN"),

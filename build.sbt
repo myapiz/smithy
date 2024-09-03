@@ -18,8 +18,7 @@ val settings = Seq(
 )
 
 val publishSettings = Seq(
-  version := "0.0.2" + sys.props
-    .getOrElse("buildNumber", default = "-SNAPSHOT"),
+  releaseVersionFile := file("version.sbt"),
   publishMavenStyle := true,
   githubTokenSource := TokenSource.Environment("GITHUB_TOKEN"),
   githubOwner := "myapiz",

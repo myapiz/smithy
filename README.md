@@ -56,6 +56,12 @@ Directly use the Scala implementations in your code:
   "com.myapiz" % "smithy4s_3" % versions.myapiz,
 ```
 
+For a quick start, see the [smithy4s-project](https://github.com/myapiz/smithy4s-project) project template.
+
+## Other Resources
+
+- [Smithy](https://smithy.io/)
+
 ## License
 
 This project is licensed under the Apache-2.0 License.
